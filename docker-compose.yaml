@@ -1,0 +1,35 @@
+version: '3'
+services:
+  ros-master:
+    image: osrf/ros:indigo-desktop-full
+    container_name: ros_master_container
+    command: roscore
+    environment:
+      - ROS_MASTER_URI=http://localhost:11311  # Set this correctly inside the ros-master container
+      - ROS_HOSTNAME=localhost
+    network_mode: "host"
+
+  ros-node:
+      build: .
+      container_name: lsd_slam_node
+      network_mode: "host"
+      stdin_open: true
+      tty: true
+      privileged: true
+      environment:
+        - ROS_MASTER_URI=http://localhost:11311  # Connect to the ROS master on localhost
+        - ROS_HOSTNAME=localhost  # Set this to localhost
+        - DISPLAY=$DISPLAY
+        - QT_X11_NO_MITSHM=1
+        - XAUTHORITY=/tmp/.docker.xauth
+        - NVIDIA_VISIBLE_DEVICES=all
+        - NVIDIA_DRIVER_CAPABILITIES=all
+      volumes:
+        - ./data:/app/data  # Bind mount the host `data` folder to `/app/data` in the container
+        - ./rviz.rviz:/app/rviz_config.rviz  # Mount the rviz configuration file
+        - /tmp/.X11-unix:/tmp/.X11-unix:rw
+        - /tmp/.docker.xauth:/tmp/.docker.xauth:rw
+      command: bash
+      depends_on:
+      - ros-master
+
